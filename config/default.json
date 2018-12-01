@@ -1,0 +1,174 @@
+{
+    "apiKey": "aTgfvD01IJzD0flVKXPM",
+    "provider": "https://rinkeby.infura.io",
+    "mongoUri": "mongodb://localhost:27017/loc",
+    "secret":"evenswallet",
+    "adhiUrl":"https://adhinet.com/",
+    "port":3000,
+    "wallet": {
+        "primary": {
+            "address": "0x1E8A1E3423214a4b78BFA87440709867e6163615",
+            "privateKey": "4f7a2f30c7fbd017ffc1e70379eb42cf3f8ac28abed3fcb7d754485f39514d9e"
+        }, 
+        "secondary": {
+            "address": "0xea3697e6841CBe259Bf0C8c78aAe9a8901200CfB",
+            "privateKey": "2034cb7797f0ce26e0159d2b4adbcbbfca80750951595f87d0332577190d54af"
+        }
+    },
+    "cors": {
+        "origin": "*",
+        "domain": "localhost",
+        "credentials": true,
+        "methods": ["GET", "POST"]
+    },
+    "etheriumhost":"http://localhost:8545",
+    "contractAddress" :"0xe664bcd75acc2099f2961ed96660c594be7cb510",
+     "indcontractAddress":"0x4533cb6f8362f0a87a7f4663b925365768a0ffaf",
+     "thaicontractAddress":"0x8e3baf986041432ad47825f42667edbdfc176ad6",
+     "keycontractAddress":"0xd747dbfffa2e806ee769a67cc627428c61de5942",
+    //  "adminAddress":"0x2E7A79f34FD314f222F70376d7E4b2E615265cc4",
+     "adminAddress":"0x7dDF0ECE39A7d18AB1E95DEc8997D6361B87155b", //rinkeby account
+    //  "privateKey":"2429E98CC275964256542406C986CC2A0D4E53569B689898121984DC7E7DEBA4",
+     "privateKey":"640E4055170D9FF2B503CC1B1CF3A21C7BEF53809D61062387DA0BBD720DFC80",
+    "abi" : [
+      {
+        "constant": false,
+        "inputs": [
+          {
+            "name": "_key",
+            "type": "bytes24"
+          },
+          {
+            "name": "_owner",
+            "type": "address"
+          },
+          {
+            "name": "_doctype",
+            "type": "string"
+          },
+          {
+            "name": "_dochash",
+            "type": "string"
+          }
+        ],
+        "name": "enterStructData",
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [
+          {
+            "name": "",
+            "type": "bytes24"
+          }
+        ],
+        "name": "myStructs",
+        "outputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "doctype",
+            "type": "string"
+          },
+          {
+            "name": "dochash",
+            "type": "string"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [
+          {
+            "name": "_key",
+            "type": "bytes24"
+          }
+        ],
+        "name": "readStructData",
+        "outputs": [
+          {
+            "name": "",
+            "type": "address"
+          },
+          {
+            "name": "",
+            "type": "string"
+          },
+          {
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [
+          {
+            "name": "_key",
+            "type": "bytes24"
+          }
+        ],
+        "name": "verifyData",
+        "outputs": [
+          {
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [
+          {
+            "name": "_key",
+            "type": "bytes24"
+          }
+        ],
+        "name": "verifyMyData",
+        "outputs": [
+          {
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ]
+
+
+}

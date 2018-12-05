@@ -817,7 +817,7 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
 }
 
 
-contract PropERC721 is ERC721Token {
+contract LOC is ERC721Token {
 
     struct SaleDeal 
     {
@@ -872,19 +872,30 @@ contract PropERC721 is ERC721Token {
         super._setTokenURI(_tokenId, _tokenURI);
         propertyDetails[_tokenId] = _details;
     }
+    
+    function checkstringEmpty (string _testString) public pure returns(string){
+        if(bytes(_testString).length == 0) {
+            return 'worked';
+        } else {
+            return  'not worked';
+        }
+    }
 
 
 
-   function transfer(address _from, address _to, uint256 _tokenId) public returns (bool)
+   function transferDoc(address _from, address _to, uint256 _tokenId, string _details, string _changes) public returns (bool)
     {
 
         super.transferFrom(_from, _to, _tokenId);
-
-        deal.seller = _from;
-        deal.buyer = _to;
-        deal.date = block.timestamp;
-        deals[_tokenId].push(deal);
-
+        if(  bytes(_details).length  != 0 ) {
+            propertyDetails[_tokenId] = _details;
+        }
+        if( bytes(_changes).length  != 0) {
+        propUpgrade.changes  = _changes; 
+        propUpgrade.date     = block.timestamp;
+        propUpgrade.verifier = msg.sender; 
+        upgrades[_tokenId].push(propUpgrade);
+        }
         return true;
     }
 

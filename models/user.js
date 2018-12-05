@@ -7,6 +7,9 @@ const userSchema = new Schema({
         type: String,
         unique:true
     },
+    username: {
+        type: String
+    },
     orgName: {
         type:String
     },
@@ -40,6 +43,9 @@ const userSchema = new Schema({
     walletAddress: {
         type : String,
         unique : true
+    },
+    seed : {
+        type : String
     },
     created: {
         type: Date,

@@ -1,7 +1,9 @@
 {
     "apiKey": "aTgfvD01IJzD0flVKXPM",
     "provider": "https://rinkeby.infura.io",
-    "mongoUri": "mongodb://localhost:27017/loc",
+  
+    "mongoUri": "mongodb://user:password1@ds229474.mlab.com:29474/singlechain",
+    
     "secret":"evenswallet",
     "adhiUrl":"https://adhinet.com/",
     "port":3000,
@@ -26,9 +28,9 @@
      "indcontractAddress":"0x4533cb6f8362f0a87a7f4663b925365768a0ffaf",
      "thaicontractAddress":"0x8e3baf986041432ad47825f42667edbdfc176ad6",
      "keycontractAddress":"0xd747dbfffa2e806ee769a67cc627428c61de5942",
-    //  "adminAddress":"0x2E7A79f34FD314f222F70376d7E4b2E615265cc4",
-     "adminAddress":"0x7dDF0ECE39A7d18AB1E95DEc8997D6361B87155b", //rinkeby account
-    //  "privateKey":"2429E98CC275964256542406C986CC2A0D4E53569B689898121984DC7E7DEBA4",
+  
+     "adminAddress":"0x7dDF0ECE39A7d18AB1E95DEc8997D6361B87155b", 
+    
      "privateKey":"640E4055170D9FF2B503CC1B1CF3A21C7BEF53809D61062387DA0BBD720DFC80",
     "abi" : [
       {

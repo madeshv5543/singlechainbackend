@@ -90,10 +90,25 @@ module.exports = function(router) {
             )
         }
     )
-    router.post('/createCounter',
+    router.post('/createCounterPO',
         function(req, res) {
             let counter = new seqNo({
                 title : 'purchaseOrder',
+                sequence_value : 0
+            })
+            counter.save( function saveCallback(err, count){
+                if(err) {
+                    return res.json({message : 'Cannot create counter', status: 404, type : 'Failure'})
+                }else{
+                    res.json({message: 'Counter Created Successfully', status: 200, type: 'Success'})
+                }
+            })
+        }
+    ),
+    router.post('/createCounterLoc',
+        function(req, res) {
+            let counter = new seqNo({
+                title : 'loc',
                 sequence_value : 0
             })
             counter.save( function saveCallback(err, count){

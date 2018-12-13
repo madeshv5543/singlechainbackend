@@ -33,6 +33,7 @@ require('./auth/auth')(router);
 // require('./campainer/campaign')(router);
 require('./user/buyser')(router)
 require('./user/user')(router);
+require('./user/loc')(router);
 app.use('/api', router);
 app.use((err, req, res, next) => {
   // handle unexpected errors

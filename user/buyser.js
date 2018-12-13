@@ -29,16 +29,18 @@ function checkhex (word) {
 }
 
 function getNextSequenceValue(sequenceName, res){
- return seqNo.findOneAndUpdate(
-    { title : sequenceName },
-  { $inc : { sequence_value : 1 }},
-    function getSqgno(err, doc){
-        if(err) {
-            return res.json({message : 'Cannot create purchase order', status: 400, type: 'Failure'})
-        }else{
-            return doc.sequence_value
-        }
-    });     
+    return new Promise((resolve, reject)=> {
+        seqNo.findOneAndUpdate(
+          { title : sequenceName },
+          { $inc : { "sequence_value": 1 }},
+            function getSqgno(err, doc){
+                if(err) {
+                    reject(null)
+                }else{
+                    resolve(doc.sequence_value)
+                }
+            });
+    })   
  }
 
 
@@ -58,7 +60,12 @@ const sellerDetails = function(req, res) {
 const placeOrder = async function(req, res) {
     let {user}  = req;
     const {items, totalCost, sellerId } = req.body;
-    const orderId = await getNextSequenceValue('purchaseOrder', res);
+    let orderId;
+    try{
+        orderId = await getNextSequenceValue('purchaseOrder', res);
+    }catch(err){
+        return res.json({message : 'Cannot create purchase order', status: 400, type: 'Failure'})
+    }
     if(!items || !items.length) {
         return res.json({message: 'Cannot place the empty Order', status: 400, type: 'Failure'})
     }
@@ -86,7 +93,7 @@ const placeOrder = async function(req, res) {
                     let newOrder = new Order({
                           seller : sellerid,
                           buyer : buyerId,
-                          orderId: orderId.sequence_value,
+                          orderId: orderId,
                           items : items,
                           totalCost : totalCost,
                           status:'Pending'
@@ -98,7 +105,7 @@ const placeOrder = async function(req, res) {
                         blockchain:false
                       }]
                       let newTimeline = new Timeline({
-                        orderId: orderId.sequence_value
+                        orderId: orderId
                       })
                       newTimeline.save()
                       .then(

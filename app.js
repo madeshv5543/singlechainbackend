@@ -29,11 +29,15 @@ var router = express.Router();
 router.get('/', function(req, res) {
   res.json({message: 'Welcome to adpoints' })
 })
+router.post('/', function(req, res) {
+  res.json({message: 'Welcome to adpoints' })
+})
 require('./auth/auth')(router);
 // require('./campainer/campaign')(router);
 require('./user/buyser')(router)
 require('./user/user')(router);
 require('./user/loc')(router);
+require('./prroduct/product')(router);
 app.use('/api', router);
 app.use((err, req, res, next) => {
   // handle unexpected errors

@@ -108,7 +108,7 @@ module.exports = function(router) {
     router.post('/createCounterLoc',
         function(req, res) {
             let counter = new seqNo({
-                title : 'loc',
+                title : 'bol',
                 sequence_value : 0
             })
             counter.save( function saveCallback(err, count){

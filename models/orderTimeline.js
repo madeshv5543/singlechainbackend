@@ -30,6 +30,14 @@ const orderTimeline = new Schema({
         sellerBankerchain : String,
         sellerBankerContract : String,
         sellerBankerhost: String,
+        sentToBuyer: {
+            type: Boolean,
+            default: false
+        },
+        buyerConfirm: {
+            type: Boolean,
+            default: false
+        },
         orderId:String
 });
 module.exports = mongoose.model('Timeline', orderTimeline);

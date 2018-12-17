@@ -2,7 +2,7 @@
     "apiKey": "aTgfvD01IJzD0flVKXPM",
     "provider": "https://rinkeby.infura.io",
   
-    "mongoUri": "mongodb://user:password1@ds229474.mlab.com:29474/singlechain",
+    "mongoUri": "mongodb://localhost:27017/loc",
     
     "secret":"evenswallet",
     "adhiUrl":"https://adhinet.com/",

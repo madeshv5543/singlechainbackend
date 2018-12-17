@@ -38,6 +38,7 @@ require('./user/buyser')(router)
 require('./user/user')(router);
 require('./user/loc')(router);
 require('./prroduct/product')(router);
+require('./user/bol')(router);
 app.use('/api', router);
 app.use((err, req, res, next) => {
   // handle unexpected errors

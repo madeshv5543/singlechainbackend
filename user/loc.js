@@ -17,7 +17,9 @@ const contractAbi =[{"constant":false,"inputs":[{"name":"_to","type":"address"},
 const contractAddress = "0xef5783cf3692dd379f4e82f5241a2a3645056c7c"
 const web3 = new Web3(new Web3.providers.HttpProvider("https://adhinet.com"));
 const properc721Contract = web3.adh.contract(contractAbi);
-const smartContract = properc721Contract.at(contractAddress);  
+const smartContract = properc721Contract.at(contractAddress); 
+const upload = require('../utils/utils'); 
+
 
 function checkhex (word) {
     console.log('before add', word)
@@ -46,7 +48,15 @@ function getNextSequenceValue(sequenceName, res){
  }
 
  const createLoc = async function(req, res) {
-    const { order, banker, accNo, goodsValue, shipmentDate, expiryDate, portOfDestination, portOfDeparture, seller, buyer} = req.body;
+     let documets =[];
+    for( file of req.files){
+        let obj ={
+            fileName: file.filename,
+            actualName:file.originalname
+        }
+        documets.push(obj)
+    }
+    const { order, banker, accNo, goodsValue, shipmentDate, expiryDate, portOfDestination, sellerBank, portOfDeparture, seller, buyer} = req.body;
     let locId;
     let {email} = req.user;
     try{
@@ -67,7 +77,9 @@ function getNextSequenceValue(sequenceName, res){
         portOfDestination,
         portOfDeparture,
         locId,
-        currentholder: email
+        sellerBank,
+        currentholder: email,
+        documets
     })
     let newTimeline = new Timeline({
         orderId: locId
@@ -113,28 +125,29 @@ function getNextSequenceValue(sequenceName, res){
  }
 
  const validateLocform = ( req, res, next) => {
-     if(!req.body.hasOwnProperty('order')){
-         res.json({ message: 'Please select the order for loc', status: 400, type: 'Failure'})
+     req.body = new Object(req.body)
+     if(!req.body.order){
+       return  res.json({ message: 'Please select the order for loc', status: 400, type: 'Failure'})
      }
-     if(!req.body.hasOwnProperty('banker')) {
+     if(!req.body.banker) {
         return res.json({ message: 'Please select the banker', status: 400, type: 'Failure'})
      }
-     if(!req.body.hasOwnProperty('accNo')) {
+     if(!req.body.accNo) {
        return  res.json({ message: 'Enter your account Details', status: 400, type: 'Failure'})
      }
-     if(!req.body.hasOwnProperty('goodsValue')) {
+     if(!req.body.goodsValue) {
         return res.json({ message: 'Enter Goods Value', status: 400, type: 'Failure' })
      }
-     if(!req.body.hasOwnProperty('shipmentDate')) {
+     if(!req.body.shipmentDate) {
         return res.json( { message: 'Select the shipment Date', status: 400, type: 'Failure'}) 
      }
-     if(!req.body.hasOwnProperty('expiryDate')) {
+     if(!req.body.expiryDate) {
         return res.json( { message: 'Select the expiry date of loc', status: 400, type: 'Failure'})
      }
-     if(!req.body.hasOwnProperty('portOfDestination')) {
+     if(!req.body.portOfDestination) {
         return res.json({ message: 'Enter the port of destination', status: 400, type: 'Failure'})
      }
-     if(!req.body.hasOwnProperty('portOfDeparture')) {
+     if(!req.body.portOfDeparture) {
         return res.json({ message: 'Enter the port of departure', status: 400, type: 'Failure' })
      }
      next()
@@ -180,6 +193,7 @@ function getNextSequenceValue(sequenceName, res){
                 .populate('seller', projectFields)
                 .populate('buyer', projectFields)
                 .populate('banker', projectFields)
+                .populate('sellerBank', projectFields)
                 .populate('timeline')
                 .then(
                     orderDetails => {
@@ -244,7 +258,8 @@ function getNextSequenceValue(sequenceName, res){
         portOfDeparture: order.portOfDeparture,
         portOfDestination : order.portOfDestination,
         expiryDate : order.expiryDate,
-        createdDate : order.createdDate
+        createdDate : order.createdDate,
+        sellerBank : order.sellerBank
     }
     const rawTransaction =  
             {  
@@ -298,14 +313,13 @@ const updateLocDetails = function(req, res) {
 
 const sentToSellerBank  = function (req, res, next) {
     let { locId } = req.params;
-    let { banker } = req.body;
     let { email } = req.user;
-    Loc.findOneAndUpdate({_id : locId, currentholder : email},{ sellerBank: banker})
-    .then(
-        locDetails => {
-            if(!locDetails) {
-                return res.json({ message : 'Cannot Transfer Loc Document', status: 400, type:'Failure'})
-            }else{
+    // Loc.findOneAndUpdate({_id : locId, currentholder : email},{ sellerBank: banker})
+    // .then(
+    //     locDetails => {
+    //         if(!locDetails) {
+    //             return res.json({ message : 'Cannot Transfer Loc Document', status: 400, type:'Failure'})
+    //         }else{
                 let projectFields = [...UserPopulate, 'seed'];
                 Loc.findById(locId)
                 .populate('seller', projectFields)
@@ -320,13 +334,13 @@ const sentToSellerBank  = function (req, res, next) {
                             return res.json({ message: 'you don\'t have access to transfer this loc.', status: 400, type: 'Failure' })
                         }
                     }
-                )
+                ).catch(err => {
+                    return res.json({ message: 'Cannot Transfer Loc Document', status:400, type:'Failure'})
+                })
          
-            }
-        }
-    ).catch(err => {
-        return res.json({ message: 'Cannot Transfer Loc Document', status:400, type:'Failure'})
-    })
+        //     }
+        // }
+
 }
 
 const transferToSellerBank = (lc, req, res, next) => {
@@ -484,7 +498,7 @@ const resendToBank = function(req, res, next) {
             if(lcdetails.currentholder !== user.email) {
                 return res.json({ message: 'You don\'t have access to transfer this document', status: 400, type: 'Failure'})
             }
-            const { seller, buyer, banker, accNo, goodsValue, shipmentDate, portOfDeparture, portOfDestination, expiryDate, createdDate} = lcdetails;
+            const { seller, buyer, banker, accNo, goodsValue, shipmentDate, portOfDeparture, portOfDestination, expiryDate, sellerBank, createdDate} = lcdetails;
             const data = {
                 seller,
                 buyer,
@@ -495,7 +509,8 @@ const resendToBank = function(req, res, next) {
                 portOfDeparture,
                 portOfDestination ,
                 expiryDate ,
-                createdDate
+                createdDate,
+                sellerBank
             };
             let details = {
                 sender: buyer.walletAddress,
@@ -765,6 +780,7 @@ const updateReturnToSellerBank = function (req, res){
 module.exports = function(router) {
     router.post('/createLoc',
         verify,
+        upload.any(),
         validateLocform,
         createLoc
     ),

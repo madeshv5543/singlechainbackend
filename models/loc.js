@@ -16,6 +16,7 @@ const locSchema = new Schema({
         type: String,
         default : 'New'
     },
+    documets:Array,
     timeline: {type: Schema.Types.ObjectId, ref:'Timeline'},
     currentholder : String,
     createdDate : {

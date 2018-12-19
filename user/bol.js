@@ -44,7 +44,6 @@ function getNextSequenceValue(sequenceName, res){
     if(!req.body.order){
       return  res.json({ message: 'Please select the order for loc', status: 400, type: 'Failure'})
     }
-
     if(!req.body.shipmentDate) {
        return res.json( { message: 'Select the shipment Date', status: 400, type: 'Failure'}) 
     }
@@ -64,6 +63,14 @@ function getNextSequenceValue(sequenceName, res){
 }
 
  const createBol = async function(req, res) {
+    let documents =[];
+    for( file of req.files){
+        let obj ={
+            fileName: file.filename,
+            actualName:file.originalname
+        }
+        documents.push(obj)
+    }
     let { order, shipmentDate, shipmentType, notes, receiver, shipper } = req.body;
     let bolId;
     try{
@@ -79,7 +86,8 @@ function getNextSequenceValue(sequenceName, res){
         notes,
         shipmentDate,
         shipmentType,
-        bolId
+        bolId,
+        documents 
     });
     let newTimeline = new Timeline({
         orderId: bolId
@@ -174,9 +182,269 @@ function getNextSequenceValue(sequenceName, res){
      )
  }
 
+ const BolSentToBuyer = function(req, res, next) {
+    let { user }  = req;
+    let { id } = req.params;
+    User.findOne({email: user.email})
+    .then(
+        userdetails => {
+            if(!userdetails) {
+                return res.json({message: 'Cannot find user details', status:404, type: 'Failure'})
+            }
+            const projectFields = [...UserPopulate, 'seed'];
+            Bol.findById(id)
+            .populate('shipper', projectFields)
+            .populate('receiver', projectFields)
+            .populate('order')
+            .then(
+                bolDetails => {
+                    create721(bolDetails, req, res, next)
+                },
+                err=>{
+                    return res.json({ message: 'Cannot find BOL Document', status: 404, type: 'Failure' })
+                }
+            )
+        },
+        err =>{
+            return res.json({ message: 'Cannot transfer the BOL Document' })
+        }
+    )
+
+ }
+
+ const create721  = function(order, req, res, next) {
+    const id = order.bolId;
+    const name ='BillOfLading';
+    const { user } = req;
+    let purchaseOrder ={
+        purchaseOrderId: order.order.orderId,
+        totalValue: order.order.totalCost,
+        items: order.order.items
+    }
+    const data = {
+        shipper : order.shipper,
+        receiver : order.receiver,
+        shipmentDate : order.shipmentDate,
+        shipmentType: order.shipmentType,
+        createdDate : order.createdDate,
+        purchaseOrder
+    }
+    const rawTransaction =  
+            {  
+                  "nonce":checkhex(web3.toHex(web3.adh.getTransactionCount(order.shipper.walletAddress))),
+                  "gasPrice":1000000000,
+                  "gasLimit":3000000,
+                  "to":smartContract.address,
+                  "value":"0x00",
+                  "data":smartContract.mintUniqueTokenTo.getData(order.receiver.walletAddress, id , name, JSON.stringify(data), { from : order.shipper.walletAddress }),
+                  "chainId":1
+            }
+                let encodeHash = encrypt.signTx(order.shipper.seed, user.phrase, rawTransaction )
+                web3.adh.sendRawTransaction('0x' + encodeHash.toString('hex'), function(err, txnno) {
+                    if (!err)
+                            {                           
+                               req.details = {
+                                   host :'https://adhinet.com',
+                                   contractAddress : contractAddress,
+                                   txhash : 'http://adhichain.info/tx/' + txnno
+                               }
+                               next()
+                            }
+                            else {
+                                return res.json({message: 'Cannot Transfer the BOL Document', status:400, type: 'Failure'})
+                            }
+                      });
+}
+
+const updateSentToBuyer = function(req, res) {
+    let { id } = req.params;
+    let { host, contractAddress, txhash} = req.details;
+    Bol.findByIdAndUpdate(id, { status:'Active'  })
+    .then(
+        locupdate => {
+          Timeline.findOneAndUpdate({orderId: locupdate.bolId },{sentToBuyer: true, sellerblockchain : txhash, sellerhost : host, sellerContract : contractAddress })
+          .then(
+              timeline =>{
+                return res.json({message: 'BOL Details updated Successfully.', status: 200, type:'Success'})
+              },
+              err => {
+                return res.json({ message: 'Cannot update BOL Details', status: 404, type:'Failure' })
+              }
+          )
+        },
+        err => {
+          return res.json({ message: 'Cannot update BOL Details', status: 404, type:'Failure' })
+        }
+    )
+}
+
+const setDetailsInSmartContract = function( req, res, next, details) {
+    let { sender, receiver, id, seed, data, remark} = details
+    data = data ?  data:"";
+    remark = remark ? remark:"";
+    const { user } = req;
+    // let datahash = smartContract.transferDoc.getData(sender, receiver, id ,data, remark, {from : sender})
+    var rawTransaction =  
+    {  
+          "nonce":checkhex(web3.toHex(web3.adh.getTransactionCount(sender))),
+          "gasPrice":1000000000,
+          "gasLimit":3000000,
+          "to":smartContract.address,
+          "value":"0x00",
+          "data":smartContract.transferDoc.getData(sender, receiver, id ,data, remark, {from : sender}),
+          "chainId":1
+    }
+    let encodeHash = encrypt.signTx(seed, user.phrase, rawTransaction )
+    web3.adh.sendRawTransaction('0x' + encodeHash.toString('hex'), function(err, txnno) {
+     if(!err) {
+        req.details= {
+            host :'https://adhinet.com',
+            contractAddress : contractAddress,
+            txhash : 'http://adhichain.info/tx/' + txnno
+        }
+        next()
+     }else{
+         return  res.json({message : 'Cannot transfer BOL Document', status: 400, type: 'Failure' })
+     }
+    })
+}
+
+const resentTOBuyer = function (req, res, next) {
+    let { user }  = req;
+    let { id } = req.params;
+    const {remark} = req.body;
+    User.findOne({email: user.email})
+    .then(
+        userdetails => {
+            if(!userdetails) {
+                return res.json({message: 'Cannot find user details', status:404, type: 'Failure'})
+            }
+            const projectFields = [...UserPopulate, 'seed'];
+            Bol.findById(id)
+            .populate('shipper', projectFields)
+            .populate('receiver', projectFields)
+            .populate('order')
+            .then(
+                bolDetails => {
+                    const {orderId, totalCost, items} = bolDetails.order;
+                    const { shipper, receiver, shipmentType, shipmentDate, createdDate } = bolDetails;
+                    let purchaseOrder ={
+                        purchaseOrderId: orderId,
+                        totalValue: totalCost,
+                        items: items
+                    }
+                    const data = {
+                        shipper,
+                        receiver ,
+                        shipmentDate ,
+                        shipmentType,
+                        createdDate ,
+                        purchaseOrder
+                    }
+                    const details ={
+                        sender: shipper.walletAddress,
+                        receiver: receiver.walletAddress,
+                        id: bolDetails.bolId,
+                        seed: shipper.seed,
+                        data: JSON.stringify(data),
+                        remark
+                    }
+                    setDetailsInSmartContract(req, res, next, details)
+                },
+                err=>{
+                    return res.json({ message: 'Cannot find BOL Document', status: 404, type: 'Failure' })
+                }
+            )
+        },
+        err =>{
+            return res.json({ message: 'Cannot transfer the BOL Document' })
+        }
+    )
+}
+
+
+const ApproveBol = function(req, res, next) {
+    let { user }  = req;
+    let { id } = req.params;
+    const {remark} = req.body;
+    User.findOne({email: user.email})
+    .then(
+        userData => {
+            if(!userData){
+                return res.json({ message: 'Cannot find the user Details', status: 400, type:'Failure'})
+            }
+            const projectFields = [...UserPopulate, 'seed'];
+            Bol.findById(id)
+            .populate('shipper', projectFields)
+            .populate('receiver', projectFields)
+            .populate('order')
+            .then(
+                bolDetails => {
+                    if(!bolDetails){
+                        return res.json({ message: 'Cannot find the BOL document', status: 400, type: 'Failure'  })
+                    }
+                    const { shipper, receiver } = bolDetails;
+                    const details ={
+                        sender: receiver.walletAddress,
+                        receiver: shipper.walletAddress,
+                        id: bolDetails.bolId,
+                        seed: receiver.seed,
+                        data: null,
+                        remark
+                    }
+                    setDetailsInSmartContract(req, res, next, details)
+                },
+                err =>{
+                    return res.json({ message: 'Cannot find the BOL document', status: 400, type: 'Failure'  })
+                }
+            )
+            setDetailsInSmartContract(req, res, next, details)
+        }
+    )
+}
+
+const updateBuyerAction = function(req, res) {
+    let {action} = req.body;
+    let queryBol;
+    if(action === 'Approve')
+    queryBol  = { status: 'Completed' }
+    else{
+        queryBol = { status: 'Return'}
+    }
+    let { id } = req.params;
+    let { host, contractAddress, txhash} = req.details;
+    let timelineQuery;
+    if(action === 'Approve')
+    timelineQuery  = {buyerConfirm: true, buyerblockchain : txhash, buyerhost : host, buyerContract : contractAddress }
+    else{
+        timelineQuery  = {buyerConfirm: false, buyerblockchain : txhash, buyerhost : host, buyerContract : contractAddress }
+    }
+    Bol.findByIdAndUpdate(id, queryBol)
+    .then(
+        locupdate => {
+          Timeline.findOneAndUpdate({orderId: locupdate.bolId },timelineQuery)
+          .then(
+              timeline =>{
+                return res.json({message: 'BOL Details updated Successfully.', status: 200, type:'Success'})
+              },
+              err => {
+                return res.json({ message: 'Cannot update BOL Details', status: 404, type:'Failure' })
+              }
+          )
+        },
+        err => {
+          return res.json({ message: 'Cannot update BOL Details', status: 404, type:'Failure' })
+        }
+    )
+}
+
+
+ 
+
  module.exports = function(router) {
      router.post('/createBol', 
         verify,
+        upload.any(),
         validateBolform,
         createBol
      ),
@@ -196,5 +464,20 @@ function getNextSequenceValue(sequenceName, res){
     router.post('/deleteBol/:id',
         verify,
         deleteBol
+    ),
+    router.post('/bolSentToBuyer/:id',
+        verify,
+        BolSentToBuyer,
+        updateSentToBuyer
+    ),
+    router.post('/bolResentToBuyer/:id',
+        verify,
+        resentTOBuyer,
+        updateSentToBuyer
+    ),
+    router.post('/bolBuyerAction/:id',
+        verify,
+        ApproveBol,
+        updateBuyerAction
     )
  }

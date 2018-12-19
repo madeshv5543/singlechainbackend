@@ -314,33 +314,23 @@ const updateLocDetails = function(req, res) {
 const sentToSellerBank  = function (req, res, next) {
     let { locId } = req.params;
     let { email } = req.user;
-    // Loc.findOneAndUpdate({_id : locId, currentholder : email},{ sellerBank: banker})
-    // .then(
-    //     locDetails => {
-    //         if(!locDetails) {
-    //             return res.json({ message : 'Cannot Transfer Loc Document', status: 400, type:'Failure'})
-    //         }else{
-                let projectFields = [...UserPopulate, 'seed'];
-                Loc.findById(locId)
-                .populate('seller', projectFields)
-                .populate('buyer', projectFields)
-                .populate('banker', projectFields)
-                .populate('sellerBank', projectFields)
-                .then(
-                    lcdetails => {
-                        if(lcdetails.currentholder === email){
-                            transferToSellerBank(lcdetails, req, res, next )
-                        }else{
-                            return res.json({ message: 'you don\'t have access to transfer this loc.', status: 400, type: 'Failure' })
-                        }
-                    }
-                ).catch(err => {
-                    return res.json({ message: 'Cannot Transfer Loc Document', status:400, type:'Failure'})
-                })
-         
-        //     }
-        // }
-
+    let projectFields = [...UserPopulate, 'seed'];
+    Loc.findById(locId)
+    .populate('seller', projectFields)
+    .populate('buyer', projectFields)
+    .populate('banker', projectFields)
+    .populate('sellerBank', projectFields)
+    .then(
+        lcdetails => {
+            if(lcdetails.currentholder === email){
+                transferToSellerBank(lcdetails, req, res, next )
+            }else{
+                return res.json({ message: 'you don\'t have access to transfer this loc.', status: 400, type: 'Failure' })
+            }
+        }
+    ).catch(err => {
+        return res.json({ message: 'Cannot Transfer Loc Document', status:400, type:'Failure'})
+    })
 }
 
 const transferToSellerBank = (lc, req, res, next) => {

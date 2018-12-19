@@ -7,6 +7,7 @@ const bolSchema =  new Schema({
     shipmentDate: { type: Date},
     timeline: {type: Schema.Types.ObjectId, ref:'Timeline'},
     shipmentType:String,
+    documents: Array,
     notes:String,
     createdDate : {
         type: Date,

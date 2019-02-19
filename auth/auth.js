@@ -58,7 +58,7 @@ module.exports = function(router) {
                             password,
                             accountType,
                             seed:seedHash,
-                            walletAddress:address,
+                            address,
                             username
                         })
                         const data = {
@@ -133,7 +133,7 @@ module.exports = function(router) {
                                         username:user.username,
                                         accountType:user.accountType
                                     };
-                                    token = createToken({email:data.email,  phrase:password, accountType:user.accountType}, res);
+                                    token = createToken({email:data.email, address: user.address,  phrase:password, accountType:user.accountType}, res);
                                     res.json({data, token, status: 200, type: 'success'})
                                 }
                         }

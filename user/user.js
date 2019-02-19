@@ -49,6 +49,51 @@ module.exports = function(router) {
         }
     );
 
+    router.get('/hubList',
+        verify,
+        (req, res) => {
+            User.find({accountType: 'DeliveryHub'})
+            .then(
+                hublist=>{
+                    return res.json({data: hublist, status: 200, type: 'Success'})
+                },
+                err => {
+                    return res.json({message: 'Cannot get the delivery hub list', status: 400, type: 'Failure'})
+                }
+            )
+        }
+    )
+
+    router.get('/centersList',
+        verify,
+        (req, res) => {
+            User.find({accountType: 'DeliveryCenter'})
+            .then(
+                hublist=>{
+                    return res.json({data: hublist, status: 200, type: 'Success'})
+                },
+                err => {
+                    return res.json({message: 'Cannot get the delivery center list', status: 400, type: 'Failure'})
+                }
+            )
+        }
+    )
+
+    router.get('/deliveryPersonsList',
+        verify,
+        (req, res) => {
+            User.find({accountType: 'DeliveryBoy'})
+            .then(
+                hublist=>{
+                    return res.json({data: hublist, status: 200, type: 'Success'})
+                },
+                err => {
+                    return res.json({message: 'Cannot get the delivery Persons list', status: 400, type: 'Failure'})
+                }
+            )
+        }
+    )
+
     router.post('/edituser',
         verify,
         upload.any(),
@@ -108,7 +153,7 @@ module.exports = function(router) {
     router.post('/createCounterLoc',
         function(req, res) {
             let counter = new seqNo({
-                title : 'bol',
+                title : 'product',
                 sequence_value : 0
             })
             counter.save( function saveCallback(err, count){

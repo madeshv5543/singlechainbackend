@@ -39,6 +39,7 @@ require('./user/user')(router);
 require('./user/loc')(router);
 require('./prroduct/product')(router);
 require('./user/bol')(router);
+require('./user/product')(router)
 app.use('/api', router);
 app.use((err, req, res, next) => {
   // handle unexpected errors

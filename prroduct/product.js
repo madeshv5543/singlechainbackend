@@ -3,17 +3,33 @@ const verify = require('../middleware/verify');
 const User = require('../models/user');
 const Product = require('../models/product');
 const upload = require('../utils/utils');
+const seqNo = require('../models/counter');
+const Timeline = require('../models/deliveryTimeline');
 const uuidv1 = require('uuid/v1');
 const mongoose = require('mongoose')
 const UserPopulate = ['accountType', 'address', 'city', 'companyName', 'country', 'created', 'email', 'firstName', 'lastName', 'phoneNumber', 'pincode', 'username']
 
-
+function getNextSequenceValue(sequenceName, res){
+    return new Promise((resolve, reject)=> {
+        seqNo.findOneAndUpdate(
+          { title : sequenceName },
+          { $inc : { "sequence_value": 1 }},
+            function getSqgno(err, doc){
+                if(err) {
+                    reject(null)
+                }else{
+                    resolve(doc.sequence_value)
+                }
+            });
+    })   
+ }
 
 module.exports = function (router) {
     router.post('/productOrder',
         verify,
         upload.single('urlimg'),
-        (req, res) => {
+       async (req, res) => {
+           const {user} = req;
             const requireParams = [
                 'name',
                 'unitprice',
@@ -38,6 +54,12 @@ module.exports = function (router) {
                     type: 'Failure'
                 });
             };
+            let productId;
+            try{
+                productId = await getNextSequenceValue('product', res);
+            }catch(err){
+                return res.json({message : 'Cannot create Product', status: 400, type: 'Failure'})
+            }
             const {
                 name,
                 unitprice,
@@ -70,30 +92,48 @@ module.exports = function (router) {
                 type,
                 skucode,
                 unitofquantity,
-                image
+                image,
+                productId,
+                currentHolder: user.email
             });
             if (req.file) {
                 newproduct.image = req.file.filename
                 console.log(newproduct.image)
             }
+
+    let newTimeline = new Timeline({
+        orderId: productId
+    })
+    newTimeline.save()
+    .then(
+        result => {
+            newproduct.timeline = result._id;
             newproduct.save()
-                .then(
-                    doc => {
-                        return res.json({
-                            message: 'Product added successfully',
-                            status: 200,
-                            type: 'Success'
-                        })
-                    },
-                    err => {
-                        return res.json({
-                            message: 'Cannot save  product details. Try after sometime',
-                            status: 500,
-                            type: 'Failure'
-                        })
-                    }
-                )
+            .then(
+                doc => {
+                    return res.json({
+                        message: 'Product added successfully',
+                        status: 200,
+                        type: 'Success'
+                    })
+                },
+                err => {
+                    return res.json({
+                        message: 'Cannot save  product details. Try after sometime',
+                        status: 500,
+                        type: 'Failure'
+                    })
+                }
+            )
+        },
+        err => {
+            return res.json({
+                message: 'Cannot save product details. Try after sometime',
+                status: 500,
+                type: 'Failure'
+            })
         }
+        )}
     );
     router.get('/productlist',
         verify,
@@ -120,6 +160,7 @@ module.exports = function (router) {
                 productId
             } = req.params
             Product.findById(productId)
+            .populate('timeline')
                 .then(
                     doc => {
                         if (!doc) {

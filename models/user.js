@@ -34,13 +34,13 @@ const userSchema = new Schema({
     pincode : {
         type: String
     },
-    address: {
+    physicalAddress: {
         type: String
     },
     phoneNumber: {
         type:String
     },
-    walletAddress: {
+    address: {
         type : String,
         unique : true
     },
